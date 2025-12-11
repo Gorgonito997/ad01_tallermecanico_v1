@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class Clientes implements IClientes {
-
+//Clase clientes
     private static final String FICHERO_CLIENTES = String.format("%s%s%s%s%s%s%s",
             "datos", File.separator, "ficheros", File.separator, "json", File.separator, "clientes.json");
 
