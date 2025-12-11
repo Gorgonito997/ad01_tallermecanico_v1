@@ -1,9 +1,6 @@
 package org.iesalandalus.programacion.tallermecanico.modelo.dominio;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.*;
 import org.iesalandalus.programacion.tallermecanico.modelo.TallerMecanicoExcepcion;
 
 import java.time.LocalDate;
@@ -11,14 +8,24 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        property = "tipo"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Revision.class, name = "Revision"),
+        @JsonSubTypes.Type(value = Mecanico.class, name = "Mecanico")
+})
 public abstract class Trabajo {
     public static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final float FACTOR_DIA = 10F;
 
     private Cliente cliente;
     private Vehiculo vehiculo;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate fechaInicio;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate fechaFin;
     private int horas;
 
@@ -74,6 +81,16 @@ public abstract class Trabajo {
         this.vehiculo = vehiculo;
     }
 
+    public String getTipo() {
+        if (this instanceof Revision) {
+            return "Revision";
+        } else if (this instanceof Mecanico) {
+            return "Mecanico";
+        } else {
+            return null;
+        }
+    }
+
     public LocalDate getFechaInicio() {
         return fechaInicio;
     }
@@ -85,8 +102,8 @@ public abstract class Trabajo {
         }
         this.fechaInicio = fechaInicio;
     }
-
-    public LocalDate getFechaFin() {
+    @JsonSetter(nulls = Nulls.SKIP)
+   public LocalDate getFechaFin() {
         return fechaFin;
     }
 
@@ -126,7 +143,7 @@ public abstract class Trabajo {
         setFechaFin(fechaFin);
     }
 
-
+    @JsonIgnore
     public float getPrecio() {
         return getPrecioFijo() + getPrecioEspecifico();
     }
@@ -138,7 +155,7 @@ public abstract class Trabajo {
     private float getDias() {
         return (estaCerrado()) ? (int) ChronoUnit.DAYS.between(fechaInicio, fechaFin) : 0;
     }
-
+    @JsonIgnore
     public abstract float getPrecioEspecifico();
 
     @Override
