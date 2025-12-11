@@ -7,6 +7,7 @@ import org.iesalandalus.programacion.tallermecanico.modelo.negocio.IVehiculos;
 
 
 public class FuenteDatosFicherosJSON implements IFuenteDatos {
+    //Es basicamente lo mismo que la Fuente de datos XML
     @Override
     public IClientes crearClientes() {
         return Clientes.getInstancia();

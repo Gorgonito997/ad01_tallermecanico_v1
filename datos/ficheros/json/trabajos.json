@@ -1,0 +1,17 @@
+[ {
+  "cliente" : {
+    "nombre" : "Alvaro Martínez Flores",
+    "dni" : "77159513X",
+    "telefono" : "658987545"
+  },
+  "vehiculo" : {
+    "marca" : "Seat",
+    "modelo" : "Panda",
+    "matricula" : "7845LWR"
+  },
+  "fechaInicio" : "2025-12-11",
+  "fechaFin" : null,
+  "horas" : 0,
+  "precioMaterial" : 0.0,
+  "tipo" : "Mecanico"
+} ]

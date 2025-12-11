@@ -5,6 +5,7 @@ import org.iesalandalus.programacion.tallermecanico.modelo.negocio.ficheros.json
 
 
 public enum FabricaFuenteDatos {
+    //Añado al enum la nueva fábrica
     FICHEROS_JSON {
         @Override
         public IFuenteDatos crear() {
