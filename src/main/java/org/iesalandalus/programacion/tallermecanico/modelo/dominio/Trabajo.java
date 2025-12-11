@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,//Explicado en el documento
         property = "tipo"
 )
 @JsonSubTypes({
@@ -23,6 +23,7 @@ public abstract class Trabajo {
 
     private Cliente cliente;
     private Vehiculo vehiculo;
+    //Formateo de las fechas para deserializar
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate fechaInicio;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -80,7 +81,7 @@ public abstract class Trabajo {
         Objects.requireNonNull(vehiculo, "El vehículo no puede ser nulo.");
         this.vehiculo = vehiculo;
     }
-
+    //Get que no utilizamos pero necesita el JSON
     public String getTipo() {
         if (this instanceof Revision) {
             return "Revision";

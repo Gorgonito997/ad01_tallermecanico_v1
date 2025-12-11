@@ -15,12 +15,14 @@ import java.util.List;
 import java.util.Objects;
 
 public class Clientes implements IClientes {
-//Clase clientes
+//Ruta para guardar el fichero
     private static final String FICHERO_CLIENTES = String.format("%s%s%s%s%s%s%s",
             "datos", File.separator, "ficheros", File.separator, "json", File.separator, "clientes.json");
-
+//Colección para guardar en memnoria
     private final List<Cliente> coleccionClientes;
+    //Instacia de clase
     private static Clientes instancia;
+    //Mapper para convertir
     private final ObjectMapper mapper;
 
     private Clientes() {
@@ -69,6 +71,7 @@ public class Clientes implements IClientes {
             directorio.mkdirs();
         }
         try {
+            //Para escribirlo formateado
             mapper.writerWithDefaultPrettyPrinter().writeValue(fichero, coleccionClientes);
         } catch (IOException e) {
             System.out.printf("Error al escribir en el fichero %s. --> %s%n", FICHERO_CLIENTES, e.getMessage());
