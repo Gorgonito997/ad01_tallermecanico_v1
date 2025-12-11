@@ -37,7 +37,7 @@ public abstract class Trabajo {
         setFechaInicio(fechaInicio);
         horas = 0;
     }
-
+    //
     protected Trabajo(Trabajo trabajo) {
         Objects.requireNonNull(trabajo, "El trabajo no puede ser nulo.");
         cliente = new Cliente(trabajo.cliente);
