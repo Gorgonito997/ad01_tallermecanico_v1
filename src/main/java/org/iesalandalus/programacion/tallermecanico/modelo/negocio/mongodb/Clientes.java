@@ -1,6 +1,6 @@
 package org.iesalandalus.programacion.tallermecanico.modelo.negocio.mongodb;
 
-package org.iesalandalus.programacion.tallermecanico.modelo.negocio.mongodb;
+
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
