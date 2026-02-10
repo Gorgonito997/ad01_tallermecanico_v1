@@ -21,9 +21,10 @@ public class MostrarVehiculo extends Controlador {
 			tfMatricula.setText(vehiculo.matricula());
 		}
 	}
-	
+
 	public Vehiculo getVehiculo() {
 		String matricula = tfMatricula.getText();
+
 		return Vehiculo.get(matricula);
 	}
 

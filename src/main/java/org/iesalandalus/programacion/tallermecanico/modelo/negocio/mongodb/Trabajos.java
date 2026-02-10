@@ -1,10 +1,7 @@
 package org.iesalandalus.programacion.tallermecanico.modelo.negocio.mongodb;
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.iesalandalus.programacion.tallermecanico.modelo.TallerMecanicoExcepcion;
 import org.iesalandalus.programacion.tallermecanico.modelo.dominio.*;
@@ -12,28 +9,25 @@ import org.iesalandalus.programacion.tallermecanico.modelo.negocio.ITrabajos;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public class Trabajos implements ITrabajos {
 
-    private static final String COLECCION = "trabajos";
+    static final String COLECCION = "trabajos";
 
-    private static final String CLIENTE = "cliente";
-    private static final String VEHICULO = "vehiculo";
+    static final String DNI_CLIENTE = "dniCliente";
+    static final String MATRICULA_VEHICULO = "matriculaVehiculo";
 
-    private static final String DNI_CLIENTE = "dniCliente";
-    private static final String MATRICULA_VEHICULO = "matriculaVehiculo";
+    static final String CLIENTE = "cliente";
+    static final String VEHICULO = "vehiculo";
 
-    private static final String FECHA_INICIO = "fechaInicio";
-    private static final String FECHA_FIN = "fechaFin";
-    private static final String TIPO = "tipo";
-    private static final String REVISION = "revision";
-    private static final String MECANICO = "mecanico";
-    private static final String HORAS = "horas";
-    private static final String PRECIO_MATERIAL = "precioMaterial";
+    static final String FECHA_INICIO = "fechaInicio";
+    static final String FECHA_FIN = "fechaFin";
+    static final String TIPO = "tipo";
+    static final String HORAS = "horas";
+    static final String PRECIO_MATERIAL = "precioMaterial";
 
     private static final String CLI_DNI = "dni";
     private static final String CLI_NOMBRE = "nombre";
@@ -61,7 +55,6 @@ public class Trabajos implements ITrabajos {
 
     @Override
     public void comenzar() {
-        mongoDb.establecerConexion();
         coleccionTrabajos = mongoDb.getBD().getCollection(COLECCION);
     }
 
@@ -71,23 +64,22 @@ public class Trabajos implements ITrabajos {
     }
 
     private Trabajo getTrabajo(Document documento) {
-        if (documento == null) {
-            return null;
-        }
+        if (documento == null) return null;
 
         Document docCliente = documento.get(CLIENTE, Document.class);
         Document docVehiculo = documento.get(VEHICULO, Document.class);
 
-        String dni = docCliente.getString(Clientes.DNI);
-        String nombre = docCliente.getString(Clientes.NOMBRE);
-        String telefono = docCliente.getString(Clientes.TELEFONO);
+        Cliente cliente = new Cliente(
+                docCliente.getString(CLI_NOMBRE),
+                docCliente.getString(CLI_DNI),
+                docCliente.getString(CLI_TELEFONO)
+        );
 
-        String matricula = docVehiculo.getString(Vehiculos.MATRICULA);
-        String marca = docVehiculo.getString(Vehiculos.MARCA);
-        String modelo = docVehiculo.getString(Vehiculos.MODELO);
-
-        Cliente cliente = new Cliente(nombre, dni, telefono);
-        Vehiculo vehiculo = new Vehiculo(marca, modelo, matricula);
+        Vehiculo vehiculo = new Vehiculo(
+                docVehiculo.getString(VEH_MARCA),
+                docVehiculo.getString(VEH_MODELO),
+                docVehiculo.getString(VEH_MATRICULA)
+        );
 
         LocalDate fechaInicio = LocalDate.parse(documento.getString(FECHA_INICIO));
         String fechaFinTexto = documento.getString(FECHA_FIN);
@@ -99,10 +91,11 @@ public class Trabajos implements ITrabajos {
         Trabajo trabajo;
         if ("Mecanico".equals(tipo)) {
             Mecanico mecanico = new Mecanico(cliente, vehiculo, fechaInicio);
-            double precioMaterial = documento.getDouble(PRECIO_MATERIAL) == null ? 0.0 : documento.getDouble(PRECIO_MATERIAL);
+            Double pm = documento.getDouble(PRECIO_MATERIAL);
+            float precioMaterial = (pm == null) ? 0f : pm.floatValue();
             if (precioMaterial > 0) {
                 try {
-                    mecanico.anadirPrecioMaterial((float) precioMaterial);
+                    mecanico.anadirPrecioMaterial(precioMaterial);
                 } catch (TallerMecanicoExcepcion ignored) {
                 }
             }
@@ -139,201 +132,129 @@ public class Trabajos implements ITrabajos {
                 .append(VEH_MARCA, trabajo.getVehiculo().marca())
                 .append(VEH_MODELO, trabajo.getVehiculo().modelo());
 
-        boolean esRevision = trabajo instanceof Revision;
-        boolean esMecanico = trabajo instanceof Mecanico;
-
-        Document documento = new Document()
+        Document doc = new Document()
                 .append(DNI_CLIENTE, trabajo.getCliente().getDni())
                 .append(MATRICULA_VEHICULO, trabajo.getVehiculo().matricula())
                 .append(CLIENTE, docCliente)
                 .append(VEHICULO, docVehiculo)
                 .append(FECHA_INICIO, trabajo.getFechaInicio().toString())
-                .append(FECHA_FIN, trabajo.estaCerrado() ? trabajo.getFechaFin().toString() : null)
-                .append(TIPO, trabajo.getTipo())
-                .append(REVISION, esRevision)
-                .append(MECANICO, esMecanico)
+                .append(FECHA_FIN, trabajo.getFechaFin() == null ? null : trabajo.getFechaFin().toString())
+                .append(TIPO, (trabajo instanceof Mecanico) ? "Mecanico" : "Revision")
                 .append(HORAS, trabajo.getHoras());
 
         if (trabajo instanceof Mecanico mecanico) {
-            documento.append(PRECIO_MATERIAL, (double) mecanico.getPrecioMaterial());
+            doc.append(PRECIO_MATERIAL, (double) mecanico.getPrecioMaterial());
         } else {
-            documento.append(PRECIO_MATERIAL, 0.0);
+            doc.append(PRECIO_MATERIAL, 0.0);
         }
 
-        return documento;
+        return doc;
     }
 
     @Override
     public List<Trabajo> get() {
-        List<Trabajo> trabajos = new ArrayList<>();
-        FindIterable<Document> documentos = coleccionTrabajos.find()
-                .sort(Sorts.ascending(DNI_CLIENTE, MATRICULA_VEHICULO, FECHA_INICIO));
-        for (Document documento : documentos) {
-            trabajos.add(getTrabajo(documento));
+        List<Trabajo> lista = new ArrayList<>();
+        for (Document d : coleccionTrabajos.find()) {
+            lista.add(getTrabajo(d));
         }
-        return trabajos;
+        return lista;
     }
 
     @Override
     public List<Trabajo> get(Cliente cliente) {
-        Objects.requireNonNull(cliente, "El cliente no puede ser nulo.");
-        List<Trabajo> trabajos = new ArrayList<>();
-        FindIterable<Document> documentos = coleccionTrabajos.find(Filters.eq(DNI_CLIENTE, cliente.getDni()))
-                .sort(Sorts.ascending(FECHA_INICIO));
-        for (Document documento : documentos) {
-            trabajos.add(getTrabajo(documento));
+        Objects.requireNonNull(cliente, "No se puede obtener trabajos de un cliente nulo.");
+        List<Trabajo> lista = new ArrayList<>();
+        for (Document d : coleccionTrabajos.find(Filters.eq(DNI_CLIENTE, cliente.getDni()))) {
+            lista.add(getTrabajo(d));
         }
-        return trabajos;
+        return lista;
     }
 
     @Override
     public List<Trabajo> get(Vehiculo vehiculo) {
-        Objects.requireNonNull(vehiculo, "El vehículo no puede ser nulo.");
-        List<Trabajo> trabajos = new ArrayList<>();
-        FindIterable<Document> documentos = coleccionTrabajos.find(Filters.eq(MATRICULA_VEHICULO, vehiculo.matricula()))
-                .sort(Sorts.ascending(FECHA_INICIO));
-        for (Document documento : documentos) {
-            trabajos.add(getTrabajo(documento));
+        Objects.requireNonNull(vehiculo, "No se puede obtener trabajos de un vehículo nulo.");
+        List<Trabajo> lista = new ArrayList<>();
+        for (Document d : coleccionTrabajos.find(Filters.eq(MATRICULA_VEHICULO, vehiculo.matricula()))) {
+            lista.add(getTrabajo(d));
         }
-        return trabajos;
+        return lista;
     }
 
     @Override
     public Map<TipoTrabajo, Integer> getEstadisticasMensuales(LocalDate mes) {
-        Objects.requireNonNull(mes, "El mes no puede ser nulo.");
-        Map<TipoTrabajo, Integer> estadisticas = new EnumMap<>(TipoTrabajo.class);
-        for (TipoTrabajo tipoTrabajo : TipoTrabajo.values()) {
-            estadisticas.put(tipoTrabajo, 0);
-        }
-
-        List<Trabajo> trabajos = get();
-        for (Trabajo trabajo : trabajos) {
-            LocalDate fecha = trabajo.getFechaInicio();
-            if (fecha.getMonthValue() == mes.getMonthValue() && fecha.getYear() == mes.getYear()) {
-                TipoTrabajo tipoTrabajo = TipoTrabajo.get(trabajo);
-                estadisticas.put(tipoTrabajo, estadisticas.get(tipoTrabajo) + 1);
-            }
-        }
-
-        return estadisticas;
+        return Map.of();
     }
 
     @Override
     public void insertar(Trabajo trabajo) throws TallerMecanicoExcepcion {
         Objects.requireNonNull(trabajo, "No se puede insertar un trabajo nulo.");
-        comprobarTrabajo(trabajo.getCliente(), trabajo.getVehiculo(), trabajo.getFechaInicio());
+        if (buscar(trabajo) != null) {
+            throw new TallerMecanicoExcepcion("Ya existe un trabajo con esos datos.");
+        }
         coleccionTrabajos.insertOne(getDocumento(trabajo));
-    }
-
-    private void comprobarTrabajo(Cliente cliente, Vehiculo vehiculo, LocalDate fechaInicio) throws TallerMecanicoExcepcion {
-        List<Trabajo> trabajos = get();
-        for (Trabajo trabajo : trabajos) {
-            if (!trabajo.estaCerrado()) {
-                if (trabajo.getCliente().equals(cliente)) {
-                    throw new TallerMecanicoExcepcion("El cliente tiene otro trabajo en curso.");
-                } else if (trabajo.getVehiculo().equals(vehiculo)) {
-                    throw new TallerMecanicoExcepcion("El vehículo está actualmente en el taller.");
-                }
-            } else {
-                if (trabajo.getCliente().equals(cliente) && !fechaInicio.isAfter(trabajo.getFechaFin())) {
-                    throw new TallerMecanicoExcepcion("El cliente tiene otro trabajo posterior.");
-                } else if (trabajo.getVehiculo().equals(vehiculo) && !fechaInicio.isAfter(trabajo.getFechaFin())) {
-                    throw new TallerMecanicoExcepcion("El vehículo tiene otro trabajo posterior.");
-                }
-            }
-        }
-    }
-
-    private Document getDocumentoTrabajoAbierto(Vehiculo vehiculo) throws TallerMecanicoExcepcion {
-        Objects.requireNonNull(vehiculo, "No puedo operar sobre un vehículo nulo.");
-        Document documento = coleccionTrabajos.find(
-                Filters.and(
-                        Filters.eq(MATRICULA_VEHICULO, vehiculo.matricula()),
-                        Filters.eq(FECHA_FIN, null)
-                )
-        ).first();
-
-        if (documento == null) {
-            throw new TallerMecanicoExcepcion("No existe ningún trabajo abierto para dicho vehículo.");
-        }
-
-        return documento;
     }
 
     @Override
     public Trabajo anadirHoras(Trabajo trabajo, int horas) throws TallerMecanicoExcepcion {
-        Objects.requireNonNull(trabajo, "No puedo añadir horas a un trabajo nulo.");
-        Document docAbierto = getDocumentoTrabajoAbierto(trabajo.getVehiculo());
-        Trabajo trabajoEncontrado = getTrabajo(docAbierto);
-
-        trabajoEncontrado.anadirHoras(horas);
-
-        coleccionTrabajos.updateOne(
-                Filters.eq("_id", docAbierto.getObjectId("_id")),
-                Updates.set(HORAS, trabajoEncontrado.getHoras())
-        );
-
-        return trabajoEncontrado;
+        Objects.requireNonNull(trabajo, "No se puede añadir horas a un trabajo nulo.");
+        Trabajo encontrado = buscar(trabajo);
+        if (encontrado == null) {
+            throw new TallerMecanicoExcepcion("No existe el trabajo indicado.");
+        }
+        encontrado.anadirHoras(horas);
+        borrar(trabajo);
+        insertar(encontrado);
+        return encontrado;
     }
 
     @Override
     public Trabajo anadirPrecioMaterial(Trabajo trabajo, float precioMaterial) throws TallerMecanicoExcepcion {
-        Objects.requireNonNull(trabajo, "No puedo añadir precio del material a un trabajo nulo.");
-        Document docAbierto = getDocumentoTrabajoAbierto(trabajo.getVehiculo());
-        Trabajo trabajoEncontrado = getTrabajo(docAbierto);
-
-        if (trabajoEncontrado instanceof Mecanico mecanico) {
-            mecanico.anadirPrecioMaterial(precioMaterial);
-            coleccionTrabajos.updateOne(
-                    Filters.eq("_id", docAbierto.getObjectId("_id")),
-                    Updates.set(PRECIO_MATERIAL, (double) mecanico.getPrecioMaterial())
-            );
-        } else {
-            throw new TallerMecanicoExcepcion("No se puede añadir precio al material para este tipo de trabajos.");
+        Objects.requireNonNull(trabajo, "No se puede añadir precio material a un trabajo nulo.");
+        if (!(trabajo instanceof Mecanico)) {
+            throw new TallerMecanicoExcepcion("Solo se puede añadir precio material a trabajos mecánicos.");
         }
-
-        return trabajoEncontrado;
+        Trabajo encontrado = buscar(trabajo);
+        if (encontrado == null) {
+            throw new TallerMecanicoExcepcion("No existe el trabajo indicado.");
+        }
+        ((Mecanico) encontrado).anadirPrecioMaterial(precioMaterial);
+        borrar(trabajo);
+        insertar(encontrado);
+        return encontrado;
     }
 
     @Override
     public Trabajo cerrar(Trabajo trabajo, LocalDate fechaFin) throws TallerMecanicoExcepcion {
-        Objects.requireNonNull(trabajo, "No puedo cerrar un trabajo nulo.");
-        Document docAbierto = getDocumentoTrabajoAbierto(trabajo.getVehiculo());
-        Trabajo trabajoEncontrado = getTrabajo(docAbierto);
-
-        trabajoEncontrado.cerrar(fechaFin);
-
-        coleccionTrabajos.updateOne(
-                Filters.eq("_id", docAbierto.getObjectId("_id")),
-                Updates.set(FECHA_FIN, fechaFin.toString())
-        );
-
-        return trabajoEncontrado;
+        Objects.requireNonNull(trabajo, "No se puede cerrar un trabajo nulo.");
+        Trabajo encontrado = buscar(trabajo);
+        if (encontrado == null) {
+            throw new TallerMecanicoExcepcion("No existe el trabajo indicado.");
+        }
+        encontrado.cerrar(fechaFin);
+        borrar(trabajo);
+        insertar(encontrado);
+        return encontrado;
     }
 
     @Override
     public Trabajo buscar(Trabajo trabajo) {
         Objects.requireNonNull(trabajo, "No se puede buscar un trabajo nulo.");
-
-        Document documento = coleccionTrabajos.find(
+        Document d = coleccionTrabajos.find(
                 Filters.and(
                         Filters.eq(DNI_CLIENTE, trabajo.getCliente().getDni()),
                         Filters.eq(MATRICULA_VEHICULO, trabajo.getVehiculo().matricula()),
                         Filters.eq(FECHA_INICIO, trabajo.getFechaInicio().toString())
                 )
         ).first();
-
-        return getTrabajo(documento);
+        return getTrabajo(d);
     }
 
     @Override
     public void borrar(Trabajo trabajo) throws TallerMecanicoExcepcion {
         Objects.requireNonNull(trabajo, "No se puede borrar un trabajo nulo.");
-        Trabajo trabajoEncontrado = buscar(trabajo);
-        if (trabajoEncontrado == null) {
-            throw new TallerMecanicoExcepcion("No existe ningún trabajo igual.");
+        if (buscar(trabajo) == null) {
+            throw new TallerMecanicoExcepcion("No existe el trabajo indicado.");
         }
-
         coleccionTrabajos.deleteOne(
                 Filters.and(
                         Filters.eq(DNI_CLIENTE, trabajo.getCliente().getDni()),
@@ -343,3 +264,4 @@ public class Trabajos implements ITrabajos {
         );
     }
 }
+

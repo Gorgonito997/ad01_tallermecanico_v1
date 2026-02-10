@@ -1,5 +1,7 @@
 package org.iesalandalus.programacion.tallermecanico.modelo.negocio.mongodb;
 
+
+
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
@@ -14,10 +16,10 @@ import java.util.Objects;
 
 public class Vehiculos implements IVehiculos {
 
-    private static final String COLECCION = "vehiculos";
+    static final String COLECCION = "vehiculos";
+    static final String MATRICULA = "matricula";
     static final String MARCA = "marca";
     static final String MODELO = "modelo";
-    static final String MATRICULA = "matricula";
 
     private static Vehiculos instancia;
 
@@ -37,20 +39,21 @@ public class Vehiculos implements IVehiculos {
     @Override
     public void comenzar() {
         mongoDb = new MongoDb();
-        mongoDb.establecerConexion();
         coleccionVehiculos = mongoDb.getBD().getCollection(COLECCION);
     }
 
     @Override
     public void terminar() {
-        if (mongoDb != null) {
-            mongoDb.cerrarConexion();
-        }
+        mongoDb.cerrarConexion();
     }
 
     private Vehiculo getVehiculo(Document doc) {
         if (doc == null) return null;
-        return new Vehiculo(doc.getString(MATRICULA), doc.getString(MARCA), doc.getString(MODELO));
+        return new Vehiculo(
+                doc.getString(MARCA),
+                doc.getString(MODELO),
+                doc.getString(MATRICULA)
+        );
     }
 
     private Document getDocumento(Vehiculo vehiculo) {
@@ -88,7 +91,7 @@ public class Vehiculos implements IVehiculos {
     @Override
     public void borrar(Vehiculo vehiculo) throws TallerMecanicoExcepcion {
         Objects.requireNonNull(vehiculo, "No se puede borrar un vehículo nulo.");
-        if (coleccionVehiculos.find(Filters.eq(MATRICULA, vehiculo.matricula())).first() == null) {
+        if (buscar(vehiculo) == null) {
             throw new TallerMecanicoExcepcion("No existe ningún vehículo con esa matrícula.");
         }
         coleccionVehiculos.deleteOne(Filters.eq(MATRICULA, vehiculo.matricula()));

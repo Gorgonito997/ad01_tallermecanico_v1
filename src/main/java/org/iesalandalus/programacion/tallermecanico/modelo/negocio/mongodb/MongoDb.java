@@ -20,6 +20,7 @@ public class MongoDb {
     }
 
     public MongoDatabase getBD() {
+        if (conexion == null) {establecerConexion();}
         return conexion.getDatabase(BD);
     }
 

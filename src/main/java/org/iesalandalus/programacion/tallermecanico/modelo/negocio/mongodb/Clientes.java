@@ -1,7 +1,5 @@
 package org.iesalandalus.programacion.tallermecanico.modelo.negocio.mongodb;
 
-
-
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
@@ -18,9 +16,9 @@ import java.util.Objects;
 
 public class Clientes implements IClientes {
 
-    private static final String COLECCION = "clientes";
-    static final String NOMBRE = "nombre";
+    static final String COLECCION = "clientes";
     static final String DNI = "dni";
+    static final String NOMBRE = "nombre";
     static final String TELEFONO = "telefono";
 
     private static Clientes instancia;
@@ -41,20 +39,21 @@ public class Clientes implements IClientes {
     @Override
     public void comenzar() {
         mongoDb = new MongoDb();
-        mongoDb.establecerConexion();
         coleccionClientes = mongoDb.getBD().getCollection(COLECCION);
     }
 
     @Override
     public void terminar() {
-        if (mongoDb != null) {
-            mongoDb.cerrarConexion();
-        }
+        mongoDb.cerrarConexion();
     }
 
     private Cliente getCliente(Document doc) {
         if (doc == null) return null;
-        return new Cliente(doc.getString(DNI), doc.getString(NOMBRE), doc.getString(TELEFONO));
+        return new Cliente(
+                doc.getString(NOMBRE),
+                doc.getString(DNI),
+                doc.getString(TELEFONO)
+        );
     }
 
     private Document getDocumento(Cliente cliente) {
@@ -66,11 +65,11 @@ public class Clientes implements IClientes {
 
     @Override
     public List<Cliente> get() {
-        List<Cliente> lista = new ArrayList<>();
+        List<Cliente> clientes = new ArrayList<>();
         for (Document d : coleccionClientes.find().sort(Sorts.ascending(DNI))) {
-            lista.add(getCliente(d));
+            clientes.add(getCliente(d));
         }
-        return lista;
+        return clientes;
     }
 
     @Override
@@ -85,9 +84,8 @@ public class Clientes implements IClientes {
     @Override
     public Cliente modificar(Cliente cliente, String nombre, String telefono) throws TallerMecanicoExcepcion {
         Objects.requireNonNull(cliente, "No se puede modificar un cliente nulo.");
-
-        Cliente clienteEncontrado = buscar(cliente);
-        if (clienteEncontrado == null) {
+        Cliente encontrado = buscar(cliente);
+        if (encontrado == null) {
             throw new TallerMecanicoExcepcion("No existe ningún cliente con ese DNI.");
         }
 
@@ -95,35 +93,36 @@ public class Clientes implements IClientes {
 
         if (nombre != null && !nombre.isBlank()) {
             cambios.add(Updates.set(NOMBRE, nombre));
-            clienteEncontrado.setNombre(nombre);
+            encontrado.setNombre(nombre);
         }
-
         if (telefono != null && !telefono.isBlank()) {
             cambios.add(Updates.set(TELEFONO, telefono));
-            clienteEncontrado.setTelefono(telefono);
+            encontrado.setTelefono(telefono);
         }
 
         if (!cambios.isEmpty()) {
-            coleccionClientes.updateOne(Filters.eq(DNI, cliente.getDni()), Updates.combine(cambios)); // CAMBIO: combine(List<? extends Bson>)
+            coleccionClientes.updateOne(Filters.eq(DNI, cliente.getDni()), Updates.combine(cambios));
         }
 
-        return clienteEncontrado;
+        return encontrado;
     }
 
     @Override
     public Cliente buscar(Cliente cliente) {
         Objects.requireNonNull(cliente, "No se puede buscar un cliente nulo.");
-        Document d = coleccionClientes.find(Filters.eq(DNI, cliente.getDni())).first();
-        return getCliente(d);
+        return getCliente(
+                coleccionClientes.find(Filters.eq(DNI, cliente.getDni())).first()
+        );
     }
 
     @Override
     public void borrar(Cliente cliente) throws TallerMecanicoExcepcion {
         Objects.requireNonNull(cliente, "No se puede borrar un cliente nulo.");
-        if (coleccionClientes.find(Filters.eq(DNI, cliente.getDni())).first() == null) {
+        if (buscar(cliente) == null) {
             throw new TallerMecanicoExcepcion("No existe ningún cliente con ese DNI.");
         }
         coleccionClientes.deleteOne(Filters.eq(DNI, cliente.getDni()));
     }
 }
+
 

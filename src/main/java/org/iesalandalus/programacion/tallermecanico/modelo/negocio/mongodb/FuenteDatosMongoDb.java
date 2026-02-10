@@ -19,7 +19,7 @@ public class FuenteDatosMongoDb implements IFuenteDatos {
 
     @Override
     public ITrabajos crearTrabajos() {
-        return null;
+        return Trabajos.getInstancia();
     }
 }
 

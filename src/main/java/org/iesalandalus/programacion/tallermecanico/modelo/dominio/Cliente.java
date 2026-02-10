@@ -33,9 +33,9 @@ public class Cliente {
 
 	public void setNombre(String nombre) {
 		Objects.requireNonNull(nombre, "El nombre no puede ser nulo.");
-		if (!nombre.matches(ER_NOMBRE)) {
-			throw new IllegalArgumentException("El nombre no tiene un formato válido.");
-		}
+//		if (!nombre.matches(ER_NOMBRE)) {
+//			throw new IllegalArgumentException("El nombre no tiene un formato válido.");
+//		}
 		this.nombre = nombre;
 	}
 

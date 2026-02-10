@@ -16,7 +16,7 @@ public class Main {
 
     private static Pair<FabricaVista, FabricaFuenteDatos> procesarArgumentos(String[] args) {
         FabricaVista fabricaVista = FabricaVista.VENTANAS;
-        FabricaFuenteDatos fabricaFuenteDatos = FabricaFuenteDatos.FICHEROS_JSON;
+        FabricaFuenteDatos fabricaFuenteDatos = FabricaFuenteDatos.MONGODB;
 
         for (String argumento : args) {
             if (argumento.equalsIgnoreCase("-vventanas")) {
@@ -28,7 +28,9 @@ public class Main {
                 //Esta añadido por defecto arriba
             } else if (argumento.equalsIgnoreCase("-fdficherosjson")) {
                 fabricaFuenteDatos = FabricaFuenteDatos.FICHEROS_JSON;
-            }
+            } else if (argumento.equalsIgnoreCase("-fdmongodb")) {
+            fabricaFuenteDatos = FabricaFuenteDatos.MONGODB;
+        }
         }
 
         return new Pair<>(fabricaVista, fabricaFuenteDatos);
