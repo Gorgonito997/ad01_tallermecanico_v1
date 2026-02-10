@@ -9,12 +9,12 @@ public class FuenteDatosMongoDb implements IFuenteDatos {
 
     @Override
     public IClientes crearClientes() {
-        return null;
+        return Clientes.getInstancia();
     }
 
     @Override
     public IVehiculos crearVehiculos() {
-        return null;
+        return Vehiculos.getInstancia();
     }
 
     @Override
