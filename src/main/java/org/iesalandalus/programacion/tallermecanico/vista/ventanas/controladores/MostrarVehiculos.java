@@ -33,7 +33,7 @@ public class MostrarVehiculos extends Controlador {
 		getEscenario().close();
 	}
 
-
+//
 	public void actualizar(List<Vehiculo> vehiculos) {
 		this.vehiculos = FXCollections.observableArrayList(vehiculos);
 		tvVehiculos.setItems(FXCollections.observableArrayList(vehiculos));
