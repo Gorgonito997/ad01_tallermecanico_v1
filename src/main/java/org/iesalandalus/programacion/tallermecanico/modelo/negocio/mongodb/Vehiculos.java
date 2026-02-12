@@ -49,11 +49,16 @@ public class Vehiculos implements IVehiculos {
 
     private Vehiculo getVehiculo(Document doc) {
         if (doc == null) return null;
-        return new Vehiculo(
-                doc.getString(MARCA),
-                doc.getString(MODELO),
-                doc.getString(MATRICULA)
-        );
+
+        String marca = doc.getString(MARCA);
+        String modelo = doc.getString(MODELO);
+        String matricula = doc.getString(MATRICULA);
+
+        if (matricula != null) {
+            matricula = matricula.trim().toUpperCase();
+        }
+
+        return new Vehiculo(marca, modelo, matricula);
     }
 
     private Document getDocumento(Vehiculo vehiculo) {

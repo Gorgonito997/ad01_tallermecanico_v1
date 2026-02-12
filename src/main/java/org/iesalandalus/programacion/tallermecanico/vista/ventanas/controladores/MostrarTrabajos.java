@@ -119,7 +119,8 @@ public class MostrarTrabajos extends Controlador {
 		MostrarVehiculo mostrarVehiculo = (MostrarVehiculo) Controladores.get("/vistas/MostrarVehiculo.fxml", "Mostrar vehiculo", getEscenario());
 		if (mostrarCliente.getEscenario().isShowing()) {
 			leerTrabajo.setCliente(mostrarCliente.getCliente());
-		} else {
+			//AQUI ESTABA EL ERROR!
+		} else if(mostrarVehiculo.getEscenario().isShowing()){
 			leerTrabajo.setVehiculo(mostrarVehiculo.getVehiculo());
 		}
 		leerTrabajo.getEscenario().showAndWait();

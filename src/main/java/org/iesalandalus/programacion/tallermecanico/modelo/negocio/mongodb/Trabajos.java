@@ -69,17 +69,19 @@ public class Trabajos implements ITrabajos {
         Document docCliente = documento.get(CLIENTE, Document.class);
         Document docVehiculo = documento.get(VEHICULO, Document.class);
 
-        Cliente cliente = new Cliente(
-                docCliente.getString(CLI_NOMBRE),
-                docCliente.getString(CLI_DNI),
-                docCliente.getString(CLI_TELEFONO)
-        );
+        String nombre = docCliente.getString(CLI_NOMBRE);
+        String dni = docCliente.getString(CLI_DNI);
+        String telefono = docCliente.getString(CLI_TELEFONO);
 
-        Vehiculo vehiculo = new Vehiculo(
-                docVehiculo.getString(VEH_MARCA),
-                docVehiculo.getString(VEH_MODELO),
-                docVehiculo.getString(VEH_MATRICULA)
-        );
+        String marca = docVehiculo.getString(VEH_MARCA);
+        String modelo = docVehiculo.getString(VEH_MODELO);
+        String matricula = docVehiculo.getString(VEH_MATRICULA);
+
+        if (dni != null) dni = dni.trim().toUpperCase();
+        if (matricula != null) matricula = matricula.trim().toUpperCase();
+
+        Cliente cliente = new Cliente(nombre, dni, telefono);
+        Vehiculo vehiculo = new Vehiculo(marca, modelo, matricula);
 
         LocalDate fechaInicio = LocalDate.parse(documento.getString(FECHA_INICIO));
         String fechaFinTexto = documento.getString(FECHA_FIN);
@@ -120,6 +122,7 @@ public class Trabajos implements ITrabajos {
 
         return trabajo;
     }
+
 
     private Document getDocumento(Trabajo trabajo) {
         Document docCliente = new Document()
